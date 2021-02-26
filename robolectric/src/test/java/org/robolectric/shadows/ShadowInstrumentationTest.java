@@ -16,6 +16,8 @@ import java.util.concurrent.CountDownLatch;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
+import org.robolectric.annotation.LazyLoadApplication;
+import org.robolectric.annotation.LazyLoadApplication.LazyLoad;
 
 /** Tests for the ShadowInstrumentation class. */
 @RunWith(AndroidJUnit4.class)
@@ -71,5 +73,13 @@ public class ShadowInstrumentationTest {
     }
 
     assertThat(intentCount).isEqualTo(20000);
+  }
+
+  @LazyLoadApplication(LazyLoad.ON)
+  @Test
+  public void getInstrumentationLazyInitialization() {
+    assertThat(ShadowInstrumentation.getInstrumentation(false)).isNull();
+    assertThat(ShadowInstrumentation.getInstrumentation()).isNotNull();
+    assertThat(ShadowInstrumentation.getInstrumentation(false)).isNotNull();
   }
 }

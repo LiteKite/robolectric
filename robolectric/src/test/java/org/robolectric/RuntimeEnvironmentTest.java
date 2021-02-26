@@ -10,6 +10,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.LazyLoadApplication;
+import org.robolectric.annotation.LazyLoadApplication.LazyLoad;
 import org.robolectric.annotation.LooperMode;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.util.Scheduler;
@@ -40,13 +42,14 @@ public class RuntimeEnvironmentTest {
 
     final AtomicBoolean res = new AtomicBoolean();
     final CountDownLatch finished = new CountDownLatch(1);
-    Thread t = new Thread() {
-      @Override
-      public void run() {
-        res.set(RuntimeEnvironment.isMainThread());
-        finished.countDown();
-      }
-    };
+    Thread t =
+        new Thread() {
+          @Override
+          public void run() {
+            res.set(RuntimeEnvironment.isMainThread());
+            finished.countDown();
+          }
+        };
     RuntimeEnvironment.setMainThread(Thread.currentThread());
     t.start();
     if (!finished.await(1000, MILLISECONDS)) {
@@ -62,13 +65,14 @@ public class RuntimeEnvironmentTest {
 
     final AtomicBoolean res = new AtomicBoolean();
     final CountDownLatch finished = new CountDownLatch(1);
-    Thread t = new Thread() {
-      @Override
-      public void run() {
-        res.set(RuntimeEnvironment.isMainThread());
-        finished.countDown();
-      }
-    };
+    Thread t =
+        new Thread() {
+          @Override
+          public void run() {
+            res.set(RuntimeEnvironment.isMainThread());
+            finished.countDown();
+          }
+        };
     RuntimeEnvironment.setMainThread(t);
     t.start();
     if (!finished.await(1000, MILLISECONDS)) {
@@ -94,5 +98,13 @@ public class RuntimeEnvironmentTest {
     Scheduler s = new Scheduler();
     RuntimeEnvironment.setMasterScheduler(s);
     assertThat(RuntimeEnvironment.getMasterScheduler()).isSameInstanceAs(s);
+  }
+
+  @LazyLoadApplication(LazyLoad.ON)
+  @Test
+  public void getActivityThread_lazyInitialization() {
+    assertThat(RuntimeEnvironment.getActivityThread(false)).isNull();
+    assertThat(RuntimeEnvironment.getActivityThread()).isNotNull();
+    assertThat(RuntimeEnvironment.getActivityThread(false)).isNotNull();
   }
 }

@@ -524,7 +524,7 @@ public class AndroidTestEnvironment implements TestEnvironment {
     if (RuntimeEnvironment.application != null) {
       RuntimeEnvironment.application.onTerminate();
     }
-    Instrumentation instrumentation = ShadowInstrumentation.getInstrumentation();
+    Instrumentation instrumentation = ShadowInstrumentation.getInstrumentation(false);
     if (instrumentation != null) {
       instrumentation.finish(1, new Bundle());
     }

@@ -8,6 +8,7 @@ import android.app.Instrumentation;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import androidx.test.platform.app.InstrumentationRegistry;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -18,6 +19,7 @@ import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.util.reflector.Accessor;
 import org.robolectric.util.reflector.ForType;
+import org.robolectric.util.reflector.Reflector;
 
 @Implements(value = ActivityThread.class, isInAndroidSdk = false, looseSignatures = true)
 public class ShadowActivityThread {
@@ -67,6 +69,42 @@ public class ShadowActivityThread {
   @Implementation
   public static Object currentActivityThread() {
     return RuntimeEnvironment.getActivityThread();
+  }
+
+  @Implementation
+  protected static Object currentApplication() {
+    try {
+      Object currentApplication =
+          Reflector.reflector(_ActivityThread_.class, currentActivityThread())
+              .getInitialApplication();
+      if (currentApplication == null) {
+        return RuntimeEnvironment.getApplication();
+      } else {
+        return currentApplication;
+      }
+    } catch (Throwable t) {
+      return RuntimeEnvironment.getApplication();
+    }
+  }
+
+  @Implementation
+  protected Object getApplication() {
+    return RuntimeEnvironment.getApplication();
+  }
+
+  @Implementation
+  protected Object getInstrumentation() {
+    try {
+      Object instrumentation =
+          Reflector.reflector(_ActivityThread_.class, currentActivityThread()).getInstrumentation();
+      if (instrumentation == null) {
+        return InstrumentationRegistry.getInstrumentation();
+      } else {
+        return instrumentation;
+      }
+    } catch (Throwable t) {
+      return InstrumentationRegistry.getInstrumentation();
+    }
   }
 
   @Implementation(minSdk = R)
@@ -119,8 +157,16 @@ public class ShadowActivityThread {
     @Accessor("mInitialApplication")
     void setInitialApplication(Application application);
 
+    /** internal use only. Tests should use {@link ActivityThread.getApplication} */
+    @Accessor("mInitialApplication")
+    Object getInitialApplication();
+
     @Accessor("mInstrumentation")
     void setInstrumentation(Instrumentation instrumentation);
+
+    /** internal use only. Tests should use {@link ActivityThread.getInstrumentation} */
+    @Accessor("mInstrumentation")
+    Object getInstrumentation();
   }
 
   /** Accessor interface for {@link ActivityThread.AppBindData}'s internals. */

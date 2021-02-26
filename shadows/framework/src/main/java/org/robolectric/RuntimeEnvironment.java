@@ -135,7 +135,12 @@ public class RuntimeEnvironment {
   }
 
   public static Object getActivityThread() {
-    if (activityThread == null) {
+    return getActivityThread(true);
+  }
+
+  /** internal use only */
+  public static Object getActivityThread(boolean initialize) {
+    if (activityThread == null && initialize) {
       activityThread = ReflectionHelpers.newInstance(ActivityThread.class);
     }
     return activityThread;
