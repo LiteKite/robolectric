@@ -34,6 +34,7 @@ import org.robolectric.shadows.ImageUtil.RobolectricBufferedImage;
 import org.robolectric.util.Join;
 import org.robolectric.util.Logger;
 import org.robolectric.util.NamedStream;
+import org.robolectric.util.PerfStatsCollector;
 import org.robolectric.util.ReflectionHelpers;
 import org.robolectric.util.ReflectionHelpers.ClassParameter;
 
@@ -88,6 +89,7 @@ public class ShadowBitmapFactory {
     return decodeFile(pathName, null);
   }
 
+  @SuppressWarnings("Var")
   @Implementation
   protected static Bitmap decodeFile(String pathName, BitmapFactory.Options options) {
     // If a real file is used, attempt to get the image size from that file.
@@ -113,7 +115,7 @@ public class ShadowBitmapFactory {
     return bitmap;
   }
 
-  @SuppressWarnings("ObjectToString")
+  @SuppressWarnings({"ObjectToString", "Var"})
   @Implementation
   protected static Bitmap decodeFileDescriptor(
       FileDescriptor fd, Rect outPadding, BitmapFactory.Options opts) {
@@ -237,12 +239,22 @@ public class ShadowBitmapFactory {
     }
     boolean mutable = shadowBitmap.isMutable();
     shadowBitmap.setMutable(true);
-    // There are provided width and height that less than real size
-    for (int x = 0; x < shadowBitmap.getWidth() && x < image.getWidth(); x++) {
-      for (int y = 0; y < shadowBitmap.getHeight() && y < image.getHeight(); y++) {
-        shadowBitmap.setPixel(x, y, image.getRGB(x, y));
-      }
-    }
+    PerfStatsCollector.getInstance()
+        .measure(
+            "initColorArray",
+            () -> {
+              int[] colors = shadowBitmap.getColorsInternal();
+              if (colors.length == image.getWidth() * image.getHeight()) {
+                image.getRGB(
+                    0,
+                    0,
+                    image.getWidth(),
+                    image.getHeight(),
+                    shadowBitmap.getColorsInternal(),
+                    0,
+                    image.getWidth());
+              }
+            });
     shadowBitmap.setMutable(mutable);
   }
 
