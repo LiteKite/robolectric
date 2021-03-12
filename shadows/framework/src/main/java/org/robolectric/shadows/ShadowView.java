@@ -34,11 +34,14 @@ import android.widget.ImageView;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.annotation.LooperMode;
 import org.robolectric.annotation.RealObject;
+import org.robolectric.annotation.Resetter;
 import org.robolectric.shadow.api.Shadow;
 import org.robolectric.util.ReflectionHelpers;
 import org.robolectric.util.ReflectionHelpers.ClassParameter;
@@ -53,6 +56,18 @@ public class ShadowView {
   @RealObject
   protected View realView;
 
+  /**
+   * The types of view actions that can be called. When creating a new one, keep it generic. For
+   * example, if two different ShadowViews both have a separate scroll function, only put one SCROLL
+   * value here and let the View which is passed differentiate what class called the function.
+   */
+  public enum GlobalViewActionType {
+    CLICK,
+    LONG_CLICK,
+  };
+
+  private static final List<OnGlobalViewActionListener> globalViewActionListeners =
+      new CopyOnWriteArrayList<>();
   private View.OnClickListener onClickListener;
   private View.OnLongClickListener onLongClickListener;
   private View.OnFocusChangeListener onFocusChangeListener;
@@ -72,9 +87,20 @@ public class ShadowView {
   private int layerType;
   private AnimationRunner animationRunner;
 
+  /** A listener that is called whenever a user action is performed. */
+  public interface OnGlobalViewActionListener {
+
+    /**
+     * Called when a user action is performed.
+     *
+     * @param view The {@link View} being acted upon.
+     */
+    void onGlobalViewAction(View view, GlobalViewActionType globalViewActionType);
+  }
+
   /**
-   * Calls {@code performClick()} on a {@code View} after ensuring that it and its ancestors are visible and that it
-   * is enabled.
+   * Calls {@code performClick()} on a {@code View} after ensuring that it and its ancestors are
+   * visible and that it is enabled.
    *
    * @param view the view to click on
    * @return true if {@code View.OnClickListener}s were found and fired, false otherwise.
@@ -224,6 +250,52 @@ public class ShadowView {
   protected void requestLayout() {
     didRequestLayout = true;
     directly().requestLayout();
+  }
+
+  @Implementation
+  protected boolean performClick() {
+    sendGlobalViewActionEvent(GlobalViewActionType.CLICK);
+    return directlyOn(realView, View.class, "performClick");
+  }
+
+  @Implementation
+  protected boolean performLongClick() {
+    sendGlobalViewActionEvent(GlobalViewActionType.LONG_CLICK);
+    return directlyOn(realView, View.class, "performLongClick");
+  }
+
+  /**
+   * Sends an {@link OnGlobalViewActionListener} from the {@link ShadowView}.
+   *
+   * @param globalViewActionType The {@link GlobalViewActionType} representing the action.
+   */
+  protected void sendGlobalViewActionEvent(GlobalViewActionType globalViewActionType) {
+    for (OnGlobalViewActionListener listener : globalViewActionListeners) {
+      listener.onGlobalViewAction(realView, globalViewActionType);
+    }
+  }
+
+  /**
+   * Registers an {@link OnGlobalViewActionListener} to the {@link ShadowView}.
+   *
+   * @param listener The {@link OnGlobalViewActionListener} to be registered.
+   */
+  public static void addGlobalViewActionListener(OnGlobalViewActionListener listener) {
+    ShadowView.globalViewActionListeners.add(listener);
+  }
+
+  /**
+   * Removes an {@link OnGlobalViewActionListener} from the {@link ShadowView}.
+   *
+   * @param listener The {@link OnGlobalViewActionListener} to be removed.
+   */
+  public static void removeGlobalViewActionListener(OnGlobalViewActionListener listener) {
+    ShadowView.globalViewActionListeners.remove(listener);
+  }
+
+  @Resetter
+  public static void reset() {
+    ShadowView.globalViewActionListeners.clear();
   }
 
   public boolean didRequestLayout() {
