@@ -244,7 +244,9 @@ public class ShadowBitmap {
     if (dstWidth == src.getWidth() && dstHeight == src.getHeight() && !filter) {
       return src; // Return the original.
     }
-
+    if (dstWidth <= 0 || dstHeight <= 0) {
+      throw new IllegalArgumentException("width and height must be > 0");
+    }
     Bitmap scaledBitmap = ReflectionHelpers.callConstructor(Bitmap.class);
     ShadowBitmap shadowBitmap = Shadow.extract(scaledBitmap);
 
@@ -261,10 +263,18 @@ public class ShadowBitmap {
     shadowBitmap.width = dstWidth;
     shadowBitmap.height = dstHeight;
     shadowBitmap.config = src.getConfig();
+    shadowBitmap.mutable = true;
     if (shadowBitmap.config == null) {
       shadowBitmap.config = Config.ARGB_8888;
     }
-    shadowBitmap.setPixels(new int[shadowBitmap.getHeight() * shadowBitmap.getWidth()], 0, 0, 0, 0, shadowBitmap.getWidth(), shadowBitmap.getHeight());
+    shadowBitmap.setPixels(
+        new int[shadowBitmap.getHeight() * shadowBitmap.getWidth()],
+        0,
+        0,
+        0,
+        0,
+        shadowBitmap.getWidth(),
+        shadowBitmap.getHeight());
     return scaledBitmap;
   }
 
