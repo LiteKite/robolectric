@@ -7,6 +7,7 @@ import static org.robolectric.shadows.ImageUtil.getImageFromStream;
 import android.content.res.AssetManager.AssetInputStream;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -88,6 +89,7 @@ public class ShadowBitmapFactory {
     return decodeFile(pathName, null);
   }
 
+  @SuppressWarnings("Var")
   @Implementation
   protected static Bitmap decodeFile(String pathName, BitmapFactory.Options options) {
     // If a real file is used, attempt to get the image size from that file.
@@ -113,7 +115,7 @@ public class ShadowBitmapFactory {
     return bitmap;
   }
 
-  @SuppressWarnings("ObjectToString")
+  @SuppressWarnings({"ObjectToString", "Var"})
   @Implementation
   protected static Bitmap decodeFileDescriptor(
       FileDescriptor fd, Rect outPadding, BitmapFactory.Options opts) {
@@ -222,11 +224,22 @@ public class ShadowBitmapFactory {
     return create(name, null);
   }
 
+  /**
+   * @deprecated Use {@link Bitmap#createBitmap(int, int, Config)} to create a simple Bitmap or any
+   *     of the BitmapFactory.decode methods with real image data.
+   */
+  @Deprecated
   public static Bitmap create(String name, BitmapFactory.Options options) {
     return create(name, options, null);
   }
 
-  public static Bitmap create(final String name, final BitmapFactory.Options options, final Point widthAndHeight) {
+  /**
+   * @deprecated Use {@link Bitmap#createBitmap(int, int, Config)} to create a simple Bitmap or any
+   *     of the BitmapFactory.decode methods with real image data.
+   */
+  @Deprecated
+  public static Bitmap create(
+      final String name, final BitmapFactory.Options options, final Point widthAndHeight) {
     return create(name, null, options, widthAndHeight);
   }
 
@@ -305,10 +318,14 @@ public class ShadowBitmapFactory {
     return bitmap;
   }
 
+  /** @deprecated Use any of the BitmapFactory.decode methods with real image data. */
+  @Deprecated
   public static void provideWidthAndHeightHints(Uri uri, int width, int height) {
     widthAndHeightMap.put(uri.toString(), new Point(width, height));
   }
 
+  /** @deprecated Use any of the BitmapFactory.decode methods with real image data. */
+  @Deprecated
   public static void provideWidthAndHeightHints(int resourceId, int width, int height) {
     widthAndHeightMap.put(
         "resource:"
@@ -316,10 +333,14 @@ public class ShadowBitmapFactory {
         new Point(width, height));
   }
 
+  /** @deprecated Use any of the BitmapFactory.decode methods with real image data. */
+  @Deprecated
   public static void provideWidthAndHeightHints(String file, int width, int height) {
     widthAndHeightMap.put("file:" + file, new Point(width, height));
   }
 
+  /** @deprecated Use any of the BitmapFactory.decode methods with real image data. */
+  @Deprecated
   @SuppressWarnings("ObjectToString")
   public static void provideWidthAndHeightHints(FileDescriptor fd, int width, int height) {
     widthAndHeightMap.put("fd:" + fd, new Point(width, height));
