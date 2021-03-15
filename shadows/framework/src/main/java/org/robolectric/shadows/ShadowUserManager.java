@@ -437,6 +437,12 @@ public class ShadowUserManager {
     return bundle != null && bundle.getBoolean(restrictionKey);
   }
 
+  @Implementation(minSdk = JELLY_BEAN_MR2)
+  protected void setUserRestriction(String key, boolean value, UserHandle userHandle) {
+    Bundle bundle = getUserRestrictionsForUser(userHandle);
+    bundle.putBoolean(key, value);
+  }
+
   public void setUserRestriction(UserHandle userHandle, String restrictionKey, boolean value) {
     Bundle bundle = getUserRestrictionsForUser(userHandle);
     bundle.putBoolean(restrictionKey, value);
