@@ -5,6 +5,7 @@ import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.P;
 import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap.CompressFormat;
@@ -243,5 +244,17 @@ public class BitmapTest {
     assertThat(output.getPixel(99, 99)).isEqualTo(0xff00ff00);
     assertThat(output.getPixel(50, 50)).isEqualTo(0xff00ff00);
     assertThat(output.getPixel(49, 49)).isEqualTo(0);
+  }
+
+  @Test
+  public void getBitmapPixels_strideTooLong() {
+    int[] bitmapPixels = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    Bitmap bitmap = Bitmap.createBitmap(bitmapPixels, 3, 3, Bitmap.Config.ARGB_8888);
+    int[] pixelsCopy = new int[bitmap.getHeight() * bitmap.getWidth()];
+    assertThrows(
+        ArrayIndexOutOfBoundsException.class,
+        () ->
+            bitmap.getPixels(
+                pixelsCopy, 0, bitmap.getRowBytes(), 0, 0, bitmap.getWidth(), bitmap.getHeight()));
   }
 }
